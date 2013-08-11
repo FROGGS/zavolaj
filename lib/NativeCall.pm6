@@ -5,7 +5,7 @@ module NativeCall;
 my class native_callsite is repr('NativeCall') { }
 
 # Maps a chosen string encoding to a type recognized by the native call engine.
-sub string_encoding_to_nci_type($enc) {
+sub string_encoding_to_nci_type($enc) is export(:internals) {
     given $enc {
         when 'utf8'  { 'utf8str'  }
         when 'utf16' { 'utf16str' }
@@ -15,7 +15,7 @@ sub string_encoding_to_nci_type($enc) {
 }
 
 # Builds a hash of type information for the specified parameter.
-sub param_hash_for(Parameter $p, :$with-typeobj) {
+sub param_hash_for(Parameter $p, :$with-typeobj) is export(:internals) {
     my Mu $result := nqp::hash();
     my $type := $p.type();
     nqp::bindkey($result, 'typeobj', $type) if $with-typeobj;
@@ -37,7 +37,7 @@ sub param_hash_for(Parameter $p, :$with-typeobj) {
 }
 
 # Builds the list of parameter information for a callback argument.
-sub param_list_for(Signature $sig, :$with-typeobj) {
+sub param_list_for(Signature $sig, :$with-typeobj) is export(:internals) {
     my Mu $arg_info := nqp::list();
     for $sig.params -> $p {
         nqp::push($arg_info, param_hash_for($p, :with-typeobj($with-typeobj)))
@@ -47,7 +47,7 @@ sub param_list_for(Signature $sig, :$with-typeobj) {
 }
 
 # Builds a hash of type information for the specified return type.
-sub return_hash_for(Signature $s, &r?) {
+sub return_hash_for(Signature $s, &r?) is export(:internals) {
     my Mu $result := nqp::hash();
     my $returns := $s.returns;
     if $returns ~~ Str {
@@ -76,7 +76,7 @@ my %type_map =
     'num'      => 'double',
     'Num'      => 'double',
     'Callable' => 'callback';
-sub type_code_for(Mu ::T) {
+sub type_code_for(Mu ::T) is export(:internals) {
     return %type_map{T.^name}
         if %type_map.exists(T.^name);
     return 'cstruct'
@@ -90,8 +90,8 @@ sub type_code_for(Mu ::T) {
         "If you want to pass an array, be sure to use the CArray type.";
 }
 
-multi sub map_return_type(Mu $type) { Mu }
-multi sub map_return_type($type) {
+multi sub map_return_type(Mu $type) is export(:internals) { Mu }
+multi sub map_return_type($type) is export(:internals) {
     $type === int8 || $type === int16 || $type === int32 || $type === int ?? Int !!
     $type === num32 || $type === num64 || $type === num                   ?? Num !!
                                                                              $type
